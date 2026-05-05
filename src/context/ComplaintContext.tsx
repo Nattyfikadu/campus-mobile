@@ -50,10 +50,16 @@ export type Complaint = {
     id: string;
     name: string;
   };
+  supportStaff?: { id: string; name: string }[];
   createdAt: string;
   updatedAt: string;
   resolvedAt?: string;
   rejectionReason?: string;
+  escalationType?: 'unavailable' | 'beyond-skill';
+  escalationReason?: string;
+  escalationReportedBy?: { id: string; name: string };
+  resolutionDescription?: string;
+  resolutionAttachments?: Attachment[];
   attachments?: Attachment[];
 };
 
@@ -79,7 +85,13 @@ type ComplaintContextType = {
     id: string,
     status: ComplaintStatus,
     assignedTo?: { id: string; name: string },
-    rejectionReason?: string
+    rejectionReason?: string,
+    resolutionDescription?: string,
+    resolutionAttachments?: Attachment[],
+    escalationType?: 'unavailable' | 'beyond-skill',
+    escalationReason?: string,
+    escalationReportedBy?: { id: string; name: string },
+    supportStaffAdd?: { id: string; name: string }
   ) => Promise<{ success: boolean; error?: string }>;
   trackComplaint: (
     trackingCode: string
@@ -110,7 +122,9 @@ export function ComplaintProvider({ children }: { children: React.ReactNode }) {
   const reloadComplaints = async () => {
     try {
       const response = await apiClient.get('/complaints');
-      setComplaints(response.data as Complaint[]);
+      // API returns { data: [], pagination: {} } — handle both shapes
+      const list = Array.isArray(response.data) ? response.data : (response.data?.data ?? []);
+      setComplaints(list as Complaint[]);
     } catch (error) {
       console.error('Failed to load complaints', error);
     } finally {
@@ -230,13 +244,25 @@ export function ComplaintProvider({ children }: { children: React.ReactNode }) {
     id: string,
     status: ComplaintStatus,
     assignedTo?: { id: string; name: string },
-    rejectionReason?: string
+    rejectionReason?: string,
+    resolutionDescription?: string,
+    resolutionAttachments?: Attachment[],
+    escalationType?: 'unavailable' | 'beyond-skill',
+    escalationReason?: string,
+    escalationReportedBy?: { id: string; name: string },
+    supportStaffAdd?: { id: string; name: string }
   ) => {
     try {
       const response = await apiClient.patch(`/complaints/${id}/status`, {
         status,
         assignedTo,
         rejectionReason,
+        resolutionDescription,
+        resolutionAttachments,
+        escalationType,
+        escalationReason,
+        escalationReportedBy,
+        supportStaffAdd,
       });
       const updatedComplaint = response.data as Complaint;
       setComplaints((current) =>

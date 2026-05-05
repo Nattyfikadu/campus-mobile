@@ -1,9 +1,10 @@
-import React from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import React, { useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { ComplaintProvider } from './src/context/ComplaintContext';
+import SplashScreen from './src/screens/SplashScreen';
 import {
   ComplaintFormScreen,
   DashboardScreen,
@@ -20,20 +21,24 @@ const Stack = createStackNavigator();
 
 function AppNavigator() {
   const { isLoading } = useAuth();
+  const [splashDone, setSplashDone] = useState(false);
 
-  if (isLoading) {
+  // Show animated splash until both the splash animation AND auth check are done
+  if (!splashDone || isLoading) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F4F7FB' }}>
-        <ActivityIndicator size="large" color="#0F6CBD" />
-      </View>
+      <SplashScreen
+        onFinish={() => setSplashDone(true)}
+        // Keep showing splash if auth is still loading after animation ends
+        freeze={isLoading}
+      />
     );
   }
 
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Home">
-        <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Campus Complaints' }} />
-        <Stack.Screen name="RoleChoice" component={RoleChoiceScreen} options={{ title: 'Choose How To Continue' }} />
+        <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="RoleChoice" component={RoleChoiceScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Sign In' }} />
         <Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Create Account' }} />
         <Stack.Screen name="QRScanner" component={QRScannerScreen} options={{ title: 'Scan QR Code' }} />
@@ -48,10 +53,12 @@ function AppNavigator() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <ComplaintProvider>
-        <AppNavigator />
-      </ComplaintProvider>
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <ComplaintProvider>
+          <AppNavigator />
+        </ComplaintProvider>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }

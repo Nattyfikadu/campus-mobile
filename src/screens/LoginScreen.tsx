@@ -35,7 +35,7 @@ export function LoginScreen({ navigation, route }: any) {
       return;
     }
 
-    if (redirectLocation) {
+    if (redirectLocation && redirectLocation !== 'unknown') {
       navigation.replace('ComplaintForm', { location: redirectLocation, source });
       return;
     }

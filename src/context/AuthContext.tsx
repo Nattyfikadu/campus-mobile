@@ -15,6 +15,10 @@ export type User = {
   staffId?: string;
   phone?: string;
   position?: string;
+  staffLocations?: string[];
+  staffApproved?: boolean;
+  staffRejected?: boolean;
+  staffRejectionReason?: string;
 };
 
 export type RegisterData = {
@@ -28,6 +32,7 @@ export type RegisterData = {
   department?: string;
   faculty?: string;
   position?: string;
+  staffLocations?: string[];
 };
 
 type AuthContextType = {
@@ -35,9 +40,12 @@ type AuthContextType = {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (userData: RegisterData) => Promise<{ success: boolean; error?: string }>;
+  register: (userData: RegisterData) => Promise<{ success: boolean; error?: string; requiresApproval?: boolean }>;
   logout: () => Promise<void>;
-  getAllStaff: () => Promise<User[]>;
+  getAllStaff: (location?: string) => Promise<User[]>;
+  getPendingStaff: () => Promise<User[]>;
+  approveStaff: (staffId: string) => Promise<boolean>;
+  rejectStaff: (staffId: string, rejectionReason: string) => Promise<boolean>;
 };
 
 const USER_STORAGE_KEY = 'campus-mobile-user';
@@ -50,6 +58,9 @@ const AuthContext = createContext<AuthContextType>({
   register: async () => ({ success: false, error: 'Auth provider not ready' }),
   logout: async () => {},
   getAllStaff: async () => [],
+  getPendingStaff: async () => [],
+  approveStaff: async () => false,
+  rejectStaff: async () => false,
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -99,6 +110,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await apiClient.post('/auth/register', userData);
       const nextUser = response.data.user as User;
+      // Staff accounts need approval — don't log them in yet
+      if (userData.role === 'staff' && !nextUser.staffApproved) {
+        return { success: true, requiresApproval: true };
+      }
       setUser(nextUser);
       await persistUser(nextUser);
       return { success: true };
@@ -117,13 +132,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const getAllStaff = async () => {
+  const getAllStaff = async (location?: string) => {
     try {
-      const response = await apiClient.get('/auth/staff');
+      const url = location
+        ? `/auth/staff?location=${encodeURIComponent(location)}`
+        : '/auth/staff';
+      const response = await apiClient.get(url);
       return response.data as User[];
     } catch (error) {
       console.error('Failed to fetch staff list', error);
       return [];
+    }
+  };
+
+  const getPendingStaff = async () => {
+    try {
+      const response = await apiClient.get('/auth/staff/pending');
+      return response.data as User[];
+    } catch (error) {
+      console.error('Failed to fetch pending staff', error);
+      return [];
+    }
+  };
+
+  const approveStaff = async (staffId: string) => {
+    try {
+      await apiClient.patch(`/auth/staff/${staffId}/approve`, { actorRole: user?.role });
+      return true;
+    } catch (error) {
+      console.error('Failed to approve staff', error);
+      return false;
+    }
+  };
+
+  const rejectStaff = async (staffId: string, rejectionReason: string) => {
+    try {
+      await apiClient.patch(`/auth/staff/${staffId}/reject`, {
+        actorRole: user?.role,
+        rejectionReason,
+      });
+      return true;
+    } catch (error) {
+      console.error('Failed to reject staff', error);
+      return false;
     }
   };
 
@@ -137,6 +188,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         register,
         logout,
         getAllStaff,
+        getPendingStaff,
+        approveStaff,
+        rejectStaff,
       }}
     >
       {children}

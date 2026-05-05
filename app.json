@@ -16,6 +16,9 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.campusmobile.complaints",
+      "minSdkVersion": 26,
+      "targetSdkVersion": 35,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",

@@ -1,266 +1,609 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Dimensions,
+  Image,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ROLE_LABELS } from '../constants/complaints';
 import { useAuth } from '../context/AuthContext';
 
+const { width } = Dimensions.get('window');
+
+// ─── colour tokens ────────────────────────────────────────────────────────────
+const C = {
+  primary: '#1A56DB',
+  primaryDark: '#1240A8',
+  primaryLight: '#EEF4FF',
+  accent: '#F59E0B',
+  bg: '#F0F4FA',
+  card: '#FFFFFF',
+  text: '#0F172A',
+  textMid: '#475569',
+  textLight: '#94A3B8',
+  danger: '#EF4444',
+  dangerBg: '#FEF2F2',
+  success: '#10B981',
+  border: '#E2E8F0',
+};
+
+// ─── action card data ─────────────────────────────────────────────────────────
+const ACTIONS = [
+  {
+    key: 'qr',
+    icon: '⚡',
+    label: 'Scan QR Code',
+    sub: 'Fastest way to submit',
+    primary: true,
+    route: 'QRScanner',
+  },
+  {
+    key: 'form',
+    icon: '📝',
+    label: 'Submit Complaint',
+    sub: 'Fill in manually',
+    primary: false,
+    route: null, // handled separately
+  },
+  {
+    key: 'track',
+    icon: '🔍',
+    label: 'Track Complaint',
+    sub: 'Check your status',
+    primary: false,
+    route: 'TrackComplaint',
+  },
+];
+
 export function HomeScreen({ navigation }: any) {
   const { user, logout } = useAuth();
+  const insets = useSafeAreaInsets();
+
+  // Staff / office / admin should go straight to their dashboard
+  const isWorkRole = user?.role === 'staff' || user?.role === 'office' || user?.role === 'admin';
+
+  const handleAction = (key: string) => {
+    if (key === 'qr') navigation.navigate('QRScanner');
+    else if (key === 'track') navigation.navigate('TrackComplaint');
+    else
+      navigation.navigate(user ? 'ComplaintForm' : 'RoleChoice', {
+        location: 'unknown',
+        source: 'manual-entry',
+      });
+  };
+
+  // Role-specific hero stats
+  const heroStats = isWorkRole
+    ? [
+        { value: '📋', label: 'Manage' },
+        { value: '✅', label: 'Resolve' },
+        { value: '📊', label: 'Track' },
+      ]
+    : [
+        { value: 'Fast', label: 'QR Submit' },
+        { value: '24h', label: 'Avg. Response' },
+        { value: '100%', label: 'Anonymous' },
+      ];
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.heroCard}>
-        <View style={styles.heroIconWrap}>
-          <View style={styles.heroIconInner}>
-            <Text style={styles.heroIcon}>💬</Text>
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={styles.scroll}
+      showsVerticalScrollIndicator={false}
+    >
+      <StatusBar barStyle="light-content" backgroundColor={C.primaryDark} />
+
+      {/* ── HEADER ─────────────────────────────────────────────────────────── */}
+      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+        <View style={styles.headerLeft}>
+          <Image
+            source={require('../../assets/log.png')}
+            style={styles.headerLogo}
+            resizeMode="contain"
+          />
+          <View>
+            <Text style={styles.headerTitle}>Campus Voice</Text>
+            <Text style={styles.headerSub}>Complaint Management</Text>
           </View>
         </View>
-        <Text style={styles.title}>Campus Voice</Text>
-        <Text style={styles.subtitle}>
-          Help us improve the campus together with fast QR-based complaint submission.
-        </Text>
-
         {user ? (
-          <View style={styles.sessionCard}>
-            <Text style={styles.sessionTitle}>Signed in as {user.fullName}</Text>
-            <Text style={styles.sessionMeta}>
-              {ROLE_LABELS[user.role]} account • {user.email}
-            </Text>
-          </View>
-        ) : null}
-      </View>
-
-      <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate('QRScanner')}>
-        <View style={styles.primaryIconBox}>
-          <Text style={styles.primaryIcon}>⌁</Text>
-        </View>
-        <View style={styles.primaryTextWrap}>
-          <Text style={styles.primaryButtonText}>Scan QR Code</Text>
-          <Text style={styles.primaryButtonSubtext}>Quick complaint submission</Text>
-        </View>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.secondaryButton}
-        onPress={() =>
-          navigation.navigate(user ? 'ComplaintForm' : 'RoleChoice', {
-            location: 'unknown',
-            source: 'manual-entry',
-          })
-        }
-      >
-        <View style={styles.secondaryIconBox}>
-          <Text style={styles.secondaryIcon}>📝</Text>
-        </View>
-        <View style={styles.secondaryTextWrap}>
-          <Text style={styles.secondaryButtonText}>Submit Complaint</Text>
-          <Text style={styles.secondaryButtonSubtext}>Manual entry</Text>
-        </View>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.secondaryButton}
-        onPress={() => navigation.navigate('TrackComplaint')}
-      >
-        <View style={styles.secondaryIconBox}>
-          <Text style={styles.secondaryIcon}>🔎</Text>
-        </View>
-        <View style={styles.secondaryTextWrap}>
-          <Text style={styles.secondaryButtonText}>Track Complaint</Text>
-          <Text style={styles.secondaryButtonSubtext}>Check status anonymously</Text>
-        </View>
-      </TouchableOpacity>
-
-      {user ? (
-        <>
           <TouchableOpacity
-            style={styles.secondaryButton}
+            style={styles.avatarBtn}
             onPress={() => navigation.navigate('Dashboard')}
           >
-            <Text style={styles.secondaryButtonText}>Open My Dashboard</Text>
+            <Text style={styles.avatarText}>
+              {user.fullName?.charAt(0).toUpperCase() ?? 'U'}
+            </Text>
           </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={styles.signInChip}
+            onPress={() => navigation.navigate('RoleChoice')}
+          >
+            <Text style={styles.signInChipText}>Sign In</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* ── HERO BANNER ────────────────────────────────────────────────────── */}
+      <View style={styles.hero}>
+        <View style={styles.heroCircle1} />
+        <View style={styles.heroCircle2} />
+
+        <View style={styles.heroBadge}>
+          <Text style={styles.heroBadgeText}>🏫  University Portal</Text>
+        </View>
+
+        <Text style={styles.heroHeading}>
+          {user ? `Welcome back,\n${user.fullName?.split(' ')[0]}` : 'Your Voice\nMatters'}
+        </Text>
+        <Text style={styles.heroBody}>
+          {user
+            ? `Signed in as ${ROLE_LABELS[user.role]}`
+            : 'Submit, track and resolve campus issues — fast and transparently.'}
+        </Text>
+
+        <View style={styles.statsRow}>
+          {heroStats.map((s) => (
+            <View key={s.label} style={styles.statItem}>
+              <Text style={styles.statValue}>{s.value}</Text>
+              <Text style={styles.statLabel}>{s.label}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      {/* ── STAFF / OFFICE / ADMIN VIEW ────────────────────────────────────── */}
+      {isWorkRole && (
+        <>
+          <Text style={styles.sectionLabel}>Your workspace</Text>
 
           <TouchableOpacity
-            style={styles.logoutButton}
+            style={[styles.card, styles.cardPrimary]}
+            activeOpacity={0.82}
+            onPress={() => navigation.navigate('Dashboard')}
+          >
+            <View style={[styles.cardIconWrap, styles.cardIconWrapPrimary]}>
+              <Text style={styles.cardIcon}>📊</Text>
+            </View>
+            <View style={styles.cardBody}>
+              <Text style={[styles.cardLabel, styles.cardLabelPrimary]}>Open Dashboard</Text>
+              <Text style={[styles.cardSub, styles.cardSubPrimary]}>
+                {user?.role === 'staff'
+                  ? 'View and manage your assigned complaints'
+                  : 'Review, assign and resolve complaints'}
+              </Text>
+            </View>
+            <View style={[styles.cardArrow, styles.cardArrowPrimary]}>
+              <Text style={[styles.cardArrowText, styles.cardArrowTextPrimary]}>›</Text>
+            </View>
+          </TouchableOpacity>
+
+          <View style={styles.divider} />
+
+          <TouchableOpacity
+            style={styles.logoutBtn}
             onPress={async () => {
               await logout();
               navigation.replace('Home');
             }}
           >
-            <Text style={styles.logoutButtonText}>Logout</Text>
+            <Text style={styles.logoutBtnText}>Sign Out</Text>
           </TouchableOpacity>
         </>
-      ) : (
-        <View style={styles.infoPanel}>
-          <Text style={styles.infoTitle}>Expected mobile flow</Text>
-          <Text style={styles.infoText}>1. Scan the QR fixed at the campus location.</Text>
-          <Text style={styles.infoText}>2. Choose whether you are a student, visitor, or anonymous reporter.</Text>
-          <Text style={styles.infoText}>3. If you already have an account, sign in. If not, register first.</Text>
-          <Text style={styles.infoText}>4. Submit the complaint with the scanned location already filled in.</Text>
-        </View>
       )}
+
+      {/* ── STUDENT / VISITOR / GUEST VIEW ─────────────────────────────────── */}
+      {!isWorkRole && (
+        <>
+          <Text style={styles.sectionLabel}>What would you like to do?</Text>
+
+          {ACTIONS.map((a) => (
+            <TouchableOpacity
+              key={a.key}
+              activeOpacity={0.82}
+              style={[styles.card, a.primary && styles.cardPrimary]}
+              onPress={() => handleAction(a.key)}
+            >
+              <View style={[styles.cardIconWrap, a.primary && styles.cardIconWrapPrimary]}>
+                <Text style={styles.cardIcon}>{a.icon}</Text>
+              </View>
+              <View style={styles.cardBody}>
+                <Text style={[styles.cardLabel, a.primary && styles.cardLabelPrimary]}>
+                  {a.label}
+                </Text>
+                <Text style={[styles.cardSub, a.primary && styles.cardSubPrimary]}>{a.sub}</Text>
+              </View>
+              <View style={[styles.cardArrow, a.primary && styles.cardArrowPrimary]}>
+                <Text style={[styles.cardArrowText, a.primary && styles.cardArrowTextPrimary]}>›</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+
+          {/* Logged-in student/visitor extras */}
+          {user && (
+            <>
+              <View style={styles.divider} />
+              <TouchableOpacity
+                style={styles.dashboardBtn}
+                onPress={() => navigation.navigate('Dashboard')}
+              >
+                <Text style={styles.dashboardBtnIcon}>📊</Text>
+                <Text style={styles.dashboardBtnText}>Open My Dashboard</Text>
+                <Text style={styles.cardArrowText}>›</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.logoutBtn}
+                onPress={async () => {
+                  await logout();
+                  navigation.replace('Home');
+                }}
+              >
+                <Text style={styles.logoutBtnText}>Sign Out</Text>
+              </TouchableOpacity>
+            </>
+          )}
+
+          {/* Guest footer */}
+          {!user && (
+            <View style={styles.guestFooter}>
+              <View style={styles.guestFooterInner}>
+                <Text style={styles.guestFooterTitle}>Have an account?</Text>
+                <Text style={styles.guestFooterSub}>
+                  Sign in to track your complaints and get faster responses.
+                </Text>
+                <TouchableOpacity
+                  style={styles.guestFooterBtn}
+                  onPress={() => navigation.navigate('RoleChoice')}
+                >
+                  <Text style={styles.guestFooterBtnText}>Sign In / Register</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        </>
+      )}
+
+      <View style={{ height: 32 }} />
     </ScrollView>
   );
 }
 
+// ─── styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  container: {
+  root: {
+    flex: 1,
+    backgroundColor: C.bg,
+  },
+  scroll: {
     flexGrow: 1,
-    padding: 20,
-    backgroundColor: '#F4F7FB',
   },
-  heroCard: {
-    backgroundColor: '#2563EB',
-    borderRadius: 24,
-    paddingHorizontal: 24,
-    paddingTop: 30,
-    paddingBottom: 26,
-    marginBottom: 20,
-    alignItems: 'center',
-  },
-  heroIconWrap: {
-    marginBottom: 14,
-  },
-  heroIconInner: {
-    backgroundColor: '#FFFFFF',
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  heroIcon: {
-    fontSize: 34,
-  },
-  title: {
-    color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '800',
-    marginBottom: 8,
-  },
-  subtitle: {
-    color: '#DBEAFE',
-    fontSize: 14,
-    lineHeight: 20,
-    textAlign: 'center',
-  },
-  sessionCard: {
-    marginTop: 18,
-    width: '100%',
-    padding: 16,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.14)',
-  },
-  sessionTitle: {
-    color: '#FFFFFF',
-    fontSize: 17,
-    fontWeight: '700',
-  },
-  sessionMeta: {
-    color: '#B8D9FF',
-    marginTop: 4,
-  },
-  primaryButton: {
-    backgroundColor: '#2563EB',
-    borderRadius: 18,
-    paddingVertical: 20,
-    paddingHorizontal: 18,
+
+  // header
+  header: {
+    backgroundColor: C.primaryDark,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
-    shadowColor: '#2563EB',
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 4,
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 14,
   },
-  primaryIconBox: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.18)',
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  headerLogo: {
+    width: 38,
+    height: 38,
+    borderRadius: 8,
+    backgroundColor: '#fff',
+  },
+  headerTitle: {
+    color: '#fff',
+    fontSize: 17,
+    fontWeight: '800',
+    letterSpacing: 0.2,
+  },
+  headerSub: {
+    color: '#93C5FD',
+    fontSize: 11,
+    marginTop: 1,
+  },
+  avatarBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: C.accent,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 14,
   },
-  primaryIcon: {
-    color: '#FFFFFF',
-    fontSize: 26,
+  avatarText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 16,
   },
-  primaryTextWrap: {
+  signInChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.5)',
+  },
+  signInChipText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+
+  // hero
+  hero: {
+    backgroundColor: C.primary,
+    paddingHorizontal: 24,
+    paddingTop: 28,
+    paddingBottom: 32,
+    overflow: 'hidden',
+  },
+  heroCircle1: {
+    position: 'absolute',
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    top: -60,
+    right: -60,
+  },
+  heroCircle2: {
+    position: 'absolute',
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    bottom: -40,
+    left: -30,
+  },
+  heroBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    marginBottom: 16,
+  },
+  heroBadgeText: {
+    color: '#E0EEFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  heroHeading: {
+    color: '#fff',
+    fontSize: 30,
+    fontWeight: '800',
+    lineHeight: 38,
+    marginBottom: 10,
+  },
+  heroBody: {
+    color: '#BFDBFE',
+    fontSize: 14,
+    lineHeight: 21,
+    marginBottom: 24,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 16,
+    paddingVertical: 14,
+  },
+  statItem: {
     flex: 1,
+    alignItems: 'center',
   },
-  primaryButtonText: {
-    color: '#FFFFFF',
+  statValue: {
+    color: '#fff',
     fontSize: 16,
     fontWeight: '800',
   },
-  primaryButtonSubtext: {
-    color: '#DBEAFE',
+  statLabel: {
+    color: '#93C5FD',
+    fontSize: 11,
     marginTop: 2,
-    fontSize: 13,
   },
-  secondaryButton: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    paddingVertical: 18,
-    paddingHorizontal: 18,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+
+  // section label
+  sectionLabel: {
+    color: C.textMid,
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    marginTop: 24,
     marginBottom: 12,
+    marginHorizontal: 20,
+  },
+
+  // action cards
+  card: {
+    backgroundColor: C.card,
+    borderRadius: 18,
+    marginHorizontal: 16,
+    marginBottom: 10,
+    paddingVertical: 18,
+    paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: C.border,
   },
-  secondaryIconBox: {
+  cardPrimary: {
+    backgroundColor: C.primary,
+    borderColor: C.primary,
+    shadowColor: C.primary,
+    shadowOpacity: 0.35,
+    elevation: 6,
+  },
+  cardIconWrap: {
     width: 50,
     height: 50,
-    borderRadius: 16,
-    backgroundColor: '#EFF6FF',
+    borderRadius: 14,
+    backgroundColor: C.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
   },
-  secondaryIcon: {
+  cardIconWrapPrimary: {
+    backgroundColor: 'rgba(255,255,255,0.18)',
+  },
+  cardIcon: {
     fontSize: 22,
   },
-  secondaryTextWrap: {
+  cardBody: {
     flex: 1,
   },
-  secondaryButtonText: {
-    color: '#15324B',
+  cardLabel: {
+    color: C.text,
     fontSize: 15,
     fontWeight: '700',
   },
-  secondaryButtonSubtext: {
-    color: '#6B7280',
+  cardLabelPrimary: {
+    color: '#fff',
+  },
+  cardSub: {
+    color: C.textLight,
+    fontSize: 12,
     marginTop: 2,
-    fontSize: 13,
   },
-  logoutButton: {
-    backgroundColor: '#FFE7E4',
-    borderRadius: 18,
-    paddingVertical: 16,
+  cardSubPrimary: {
+    color: '#BFDBFE',
+  },
+  cardArrow: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
+    backgroundColor: C.primaryLight,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardArrowPrimary: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  cardArrowText: {
+    color: C.primary,
+    fontSize: 20,
+    fontWeight: '700',
+    lineHeight: 24,
+  },
+  cardArrowTextPrimary: {
+    color: '#fff',
+  },
+
+  // divider
+  divider: {
+    height: 1,
+    backgroundColor: C.border,
+    marginHorizontal: 16,
+    marginVertical: 16,
+  },
+
+  // dashboard button
+  dashboardBtn: {
+    backgroundColor: C.card,
+    borderRadius: 18,
+    marginHorizontal: 16,
+    marginBottom: 10,
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: C.border,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  dashboardBtnIcon: {
+    fontSize: 22,
+    marginRight: 14,
+  },
+  dashboardBtnText: {
+    flex: 1,
+    color: C.text,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+
+  // logout
+  logoutBtn: {
+    marginHorizontal: 16,
     marginTop: 4,
+    paddingVertical: 15,
+    borderRadius: 18,
+    backgroundColor: C.dangerBg,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FECACA',
   },
-  logoutButtonText: {
-    color: '#B42318',
-    fontWeight: '800',
+  logoutBtnText: {
+    color: C.danger,
+    fontWeight: '700',
+    fontSize: 15,
   },
-  infoPanel: {
-    backgroundColor: '#FFFFFF',
+
+  // guest footer
+  guestFooter: {
+    marginHorizontal: 16,
+    marginTop: 20,
+  },
+  guestFooterInner: {
+    backgroundColor: C.card,
     borderRadius: 20,
-    padding: 18,
-    marginTop: 8,
+    padding: 22,
+    borderWidth: 1,
+    borderColor: C.border,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  infoTitle: {
-    fontSize: 18,
+  guestFooterTitle: {
+    color: C.text,
+    fontSize: 17,
     fontWeight: '800',
-    color: '#15324B',
-    marginBottom: 8,
-  },
-  infoText: {
-    color: '#486581',
-    lineHeight: 22,
     marginBottom: 6,
+  },
+  guestFooterSub: {
+    color: C.textMid,
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 18,
+  },
+  guestFooterBtn: {
+    backgroundColor: C.primary,
+    borderRadius: 14,
+    paddingVertical: 13,
+    paddingHorizontal: 32,
+    shadowColor: C.primary,
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  guestFooterBtnText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 14,
   },
 });

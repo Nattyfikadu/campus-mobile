@@ -1,40 +1,63 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
-
-# dependencies
+# ── Dependencies ─────────────────────────────────────────────────────────────
 node_modules/
 
-# Expo
+# ── Expo ─────────────────────────────────────────────────────────────────────
 .expo/
 dist/
 web-build/
-
-# Native
-.kotlin/
 *.orig.*
+
+# ── EAS / Native builds ───────────────────────────────────────────────────────
+.kotlin/
+/ios/
+/android/
 *.jks
 *.p8
 *.p12
 *.key
 *.mobileprovision
+*.keystore
 
-# Metro
+# ── Metro bundler ─────────────────────────────────────────────────────────────
 .metro-health-check*
 
-# debug
+# ── Environment & secrets ─────────────────────────────────────────────────────
+.env
+.env.local
+.env.development
+.env.production
+.env*.local
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+*.log
+logs/
 
-# macOS
+# ── OS files ──────────────────────────────────────────────────────────────────
 .DS_Store
-*.pem
+Thumbs.db
+desktop.ini
 
-# local env files
-.env*.local
+# ── Editor & IDE ──────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
-# typescript
+# ── TypeScript ────────────────────────────────────────────────────────────────
 *.tsbuildinfo
 
-# generated native folders
-/ios
-/android
+# ── Package manager locks (keep only one) ────────────────────────────────────
+# Keeping package-lock.json, ignoring yarn/pnpm locks
+yarn.lock
+pnpm-lock.yaml
+
+# ── Temporary files ───────────────────────────────────────────────────────────
+*.tmp
+*.temp
+.cache/
