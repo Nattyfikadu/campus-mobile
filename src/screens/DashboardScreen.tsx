@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
+  Linking,
   Modal,
   RefreshControl,
   ScrollView,
@@ -32,6 +33,8 @@ export function DashboardScreen({ navigation }: any) {
   const [selectedStaffByComplaint, setSelectedStaffByComplaint] = useState<Record<string, string>>({});
   const [rejectionReasonByComplaint, setRejectionReasonByComplaint] = useState<Record<string, string>>({});
   const [staffDirectory, setStaffDirectory] = useState<Record<string, { id: string; name: string }[]>>({});
+  const [selectedSupportStaffByComplaint, setSelectedSupportStaffByComplaint] = useState<Record<string, string>>({});
+  const [showSupportPickerFor, setShowSupportPickerFor] = useState<string | null>(null);
 
   // Pending staff approval state (office/admin only)
   const [pendingStaff, setPendingStaff] = useState<User[]>([]);
@@ -148,6 +151,34 @@ export function DashboardScreen({ navigation }: any) {
     }
     const result = await updateComplaintStatus(complaint.id, 'in-progress', staffMember);
     if (!result.success) Alert.alert('Unable to assign', result.error || 'Please try again.');
+  };
+
+  const addSupportStaff = async (complaint: Complaint) => {
+    await ensureStaffLoaded(complaint.id, complaint.location);
+    const selectedId = selectedSupportStaffByComplaint[complaint.id];
+    const staffMember = staffDirectory[complaint.id]?.find((s) => s.id === selectedId);
+    if (!staffMember) {
+      Alert.alert('Select staff', 'Choose a support staff member first.');
+      return;
+    }
+    const result = await updateComplaintStatus(
+      complaint.id,
+      complaint.status,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      staffMember
+    );
+    if (!result.success) {
+      Alert.alert('Unable to add support', result.error || 'Please try again.');
+      return;
+    }
+    setShowSupportPickerFor(null);
+    setSelectedSupportStaffByComplaint((prev) => ({ ...prev, [complaint.id]: '' }));
   };
 
   const resolveComplaint = async (complaint: Complaint) => {
@@ -444,17 +475,24 @@ export function DashboardScreen({ navigation }: any) {
           </Text>
           <Text style={styles.description}>{complaint.description}</Text>
 
-          {/* Attachments — visible to all roles */}
+          {/* Attachments — visible to all roles, tappable to open */}
           {complaint.attachments && complaint.attachments.length > 0 ? (
             <View style={styles.attachmentsSection}>
               <Text style={styles.attachmentsSectionTitle}>📎 Attachments ({complaint.attachments.length})</Text>
               {complaint.attachments.map((att, idx) => (
-                <View key={idx} style={styles.attachmentRow}>
+                <TouchableOpacity
+                  key={idx}
+                  style={styles.attachmentRow}
+                  onPress={() => {
+                    if (att.url) Linking.openURL(att.url);
+                  }}
+                >
                   <Text style={styles.attachmentIcon}>
                     {att.type === 'image' ? '🖼️' : att.type === 'video' ? '🎥' : att.type === 'audio' ? '🎵' : '📄'}
                   </Text>
                   <Text style={styles.attachmentName} numberOfLines={1}>{att.originalName}</Text>
-                </View>
+                  <Text style={styles.attachmentOpen}>Open ›</Text>
+                </TouchableOpacity>
               ))}
             </View>
           ) : null}
@@ -593,6 +631,64 @@ export function DashboardScreen({ navigation }: any) {
               >
                 <Text style={styles.actionButtonText}>✅  Mark Resolved</Text>
               </TouchableOpacity>
+
+              {/* Add Support Staff — office/admin only */}
+              {isOfficeOrAdmin ? (
+                <>
+                  <TouchableOpacity
+                    style={styles.supportStaffBtn}
+                    onPress={async () => {
+                      await ensureStaffLoaded(complaint.id, complaint.location);
+                      setShowSupportPickerFor(
+                        showSupportPickerFor === complaint.id ? null : complaint.id
+                      );
+                    }}
+                  >
+                    <Text style={styles.supportStaffBtnText}>👥  Add Support Staff</Text>
+                  </TouchableOpacity>
+
+                  {showSupportPickerFor === complaint.id && (
+                    <View style={styles.supportPickerBox}>
+                      <Text style={styles.supportPickerLabel}>Select support staff:</Text>
+                      {staffDirectory[complaint.id]
+                        ?.filter((s) => s.id !== complaint.assignedTo?.id)
+                        .filter((s) => !(complaint.supportStaff || []).some((x) => x.id === s.id))
+                        .map((s) => (
+                          <TouchableOpacity
+                            key={s.id}
+                            style={[
+                              styles.staffOption,
+                              selectedSupportStaffByComplaint[complaint.id] === s.id &&
+                                styles.staffOptionActive,
+                            ]}
+                            onPress={() =>
+                              setSelectedSupportStaffByComplaint((prev) => ({
+                                ...prev,
+                                [complaint.id]: s.id,
+                              }))
+                            }
+                          >
+                            <Text
+                              style={[
+                                styles.staffOptionText,
+                                selectedSupportStaffByComplaint[complaint.id] === s.id &&
+                                  styles.staffOptionTextActive,
+                              ]}
+                            >
+                              {s.name}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() => addSupportStaff(complaint)}
+                      >
+                        <Text style={styles.actionButtonText}>Add Support</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </>
+              ) : null}
 
               {/* "I Can't Resolve This" — staff only */}
               {user.role === 'staff' ? (
@@ -1073,6 +1169,43 @@ const styles = StyleSheet.create({
     color: '#1A56DB',
     fontSize: 12,
     fontWeight: '500',
+  },
+  attachmentOpen: {
+    color: '#1A56DB',
+    fontSize: 11,
+    fontWeight: '700',
+    marginLeft: 4,
+  },
+
+  // ── Support staff button ──────────────────────────────────────────────────
+  supportStaffBtn: {
+    backgroundColor: '#F0F4FA',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 14,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  supportStaffBtnText: {
+    color: '#1A56DB',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  supportPickerBox: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  supportPickerLabel: {
+    color: '#475569',
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 8,
   },
 
   // ── Complaint title row ───────────────────────────────────────────────────
