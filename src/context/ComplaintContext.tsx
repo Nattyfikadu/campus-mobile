@@ -174,6 +174,9 @@ export function ComplaintProvider({ children }: { children: React.ReactNode }) {
 
       const response = await fetch(`${API_ROOT}/api/uploads/${complaintId}`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
         body: formData,
       });
 
@@ -219,6 +222,9 @@ export function ComplaintProvider({ children }: { children: React.ReactNode }) {
 
       const response = await fetch(`${API_ROOT}/api/complaints/anonymous`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
         body: formData,
       });
       const data = await response.json().catch(() => null);
