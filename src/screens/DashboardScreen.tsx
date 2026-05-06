@@ -443,6 +443,22 @@ export function DashboardScreen({ navigation }: any) {
             {getLocationLabel(complaint.location)} • {getIssueTypeLabel(complaint.category)}
           </Text>
           <Text style={styles.description}>{complaint.description}</Text>
+
+          {/* Attachments — visible to all roles */}
+          {complaint.attachments && complaint.attachments.length > 0 ? (
+            <View style={styles.attachmentsSection}>
+              <Text style={styles.attachmentsSectionTitle}>📎 Attachments ({complaint.attachments.length})</Text>
+              {complaint.attachments.map((att, idx) => (
+                <View key={idx} style={styles.attachmentRow}>
+                  <Text style={styles.attachmentIcon}>
+                    {att.type === 'image' ? '🖼️' : att.type === 'video' ? '🎥' : att.type === 'audio' ? '🎵' : '📄'}
+                  </Text>
+                  <Text style={styles.attachmentName} numberOfLines={1}>{att.originalName}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
+
           <Text style={styles.smallText}>Submitted by: {complaint.submittedBy.name}</Text>
           {complaint.assignedTo ? (
             <Text style={styles.smallText}>Assigned to: {complaint.assignedTo.name}</Text>
@@ -1028,6 +1044,36 @@ const styles = StyleSheet.create({
   },
   emptyTitle: { fontSize: 20, fontWeight: '800', color: '#15324B', marginBottom: 8 },
   emptyText: { color: '#486581' },
+
+  // ── Attachments ───────────────────────────────────────────────────────────
+  attachmentsSection: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 10,
+    padding: 10,
+    marginTop: 10,
+    marginBottom: 4,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  attachmentsSectionTitle: {
+    color: '#475569',
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  attachmentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 3,
+  },
+  attachmentIcon: { fontSize: 14 },
+  attachmentName: {
+    flex: 1,
+    color: '#1A56DB',
+    fontSize: 12,
+    fontWeight: '500',
+  },
 
   // ── Complaint title row ───────────────────────────────────────────────────
   complaintTitleRow: {

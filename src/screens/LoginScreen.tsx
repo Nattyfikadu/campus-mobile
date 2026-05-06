@@ -83,13 +83,7 @@ export function LoginScreen({ navigation, route }: any) {
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.footerLink}
-          onPress={() =>
-            navigation.navigate('Register', {
-              role: selectedRole,
-              redirectLocation,
-              source,
-            })
-          }
+          onPress={() => navigation.navigate('RoleChoice', { redirectLocation, source })}
         >
           <Text style={styles.secondaryButtonText}>Don&apos;t have an account? Sign Up</Text>
         </TouchableOpacity>

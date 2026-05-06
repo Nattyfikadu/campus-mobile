@@ -123,7 +123,7 @@ export function HomeScreen({ navigation }: any) {
         ) : (
           <TouchableOpacity
             style={styles.signInChip}
-            onPress={() => navigation.navigate('RoleChoice')}
+            onPress={() => navigation.navigate('Login')}
           >
             <Text style={styles.signInChipText}>Sign In</Text>
           </TouchableOpacity>
@@ -134,10 +134,6 @@ export function HomeScreen({ navigation }: any) {
       <View style={styles.hero}>
         <View style={styles.heroCircle1} />
         <View style={styles.heroCircle2} />
-
-        <View style={styles.heroBadge}>
-          <Text style={styles.heroBadgeText}>🏫  University Portal</Text>
-        </View>
 
         <Text style={styles.heroHeading}>
           {user ? `Welcome back,\n${user.fullName?.split(' ')[0]}` : 'Your Voice\nMatters'}
@@ -254,15 +250,21 @@ export function HomeScreen({ navigation }: any) {
           {!user && (
             <View style={styles.guestFooter}>
               <View style={styles.guestFooterInner}>
-                <Text style={styles.guestFooterTitle}>Have an account?</Text>
+                <Text style={styles.guestFooterTitle}>Join Campus Voice</Text>
                 <Text style={styles.guestFooterSub}>
-                  Sign in to track your complaints and get faster responses.
+                  Sign in or create an account to track your complaints.
                 </Text>
                 <TouchableOpacity
                   style={styles.guestFooterBtn}
+                  onPress={() => navigation.navigate('Login')}
+                >
+                  <Text style={styles.guestFooterBtnText}>Sign In</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.guestFooterBtnSecondary}
                   onPress={() => navigation.navigate('RoleChoice')}
                 >
-                  <Text style={styles.guestFooterBtnText}>Sign In / Register</Text>
+                  <Text style={styles.guestFooterBtnSecondaryText}>Create Account</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -604,6 +606,20 @@ const styles = StyleSheet.create({
   guestFooterBtnText: {
     color: '#fff',
     fontWeight: '800',
+    fontSize: 14,
+  },
+  guestFooterBtnSecondary: {
+    marginTop: 10,
+    paddingVertical: 13,
+    paddingHorizontal: 32,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: C.primary,
+    alignItems: 'center',
+  },
+  guestFooterBtnSecondaryText: {
+    color: C.primary,
+    fontWeight: '700',
     fontSize: 14,
   },
 });
