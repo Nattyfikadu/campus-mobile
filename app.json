@@ -17,8 +17,8 @@
     },
     "android": {
       "package": "com.campusmobile.complaints",
-      "minSdkVersion": 26,
-      "targetSdkVersion": 35,
+      "minSdkVersion": 23,
+      "targetSdkVersion": 34,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -29,6 +29,11 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "a7456b53-ef8b-4447-acd6-08f6d8564ee5"
+      }
     }
   }
 }
