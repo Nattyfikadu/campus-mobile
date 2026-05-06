@@ -184,6 +184,7 @@ export function ComplaintFormScreen({ navigation, route }: any) {
       <TextInput
         style={styles.input}
         placeholder="Short summary of the issue"
+        placeholderTextColor="#9CA3AF"
         value={title}
         onChangeText={setTitle}
       />
@@ -192,6 +193,7 @@ export function ComplaintFormScreen({ navigation, route }: any) {
       <TextInput
         style={[styles.input, styles.textArea]}
         placeholder="Explain what happened and what the campus should fix"
+        placeholderTextColor="#9CA3AF"
         multiline
         numberOfLines={6}
         value={description}

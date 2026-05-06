@@ -96,6 +96,7 @@ type ComplaintContextType = {
   trackComplaint: (
     trackingCode: string
   ) => Promise<{ success: boolean; complaint?: Partial<Complaint>; error?: string }>;
+  deleteComplaint: (id: string) => Promise<boolean>;
   getComplaintsByUser: (userId: string) => Complaint[];
   getComplaintsByStatus: (status: ComplaintStatus) => Complaint[];
   getComplaintsByAssignee: (assigneeId: string) => Complaint[];
@@ -110,6 +111,7 @@ const ComplaintContext = createContext<ComplaintContextType>({
   submitAnonymousComplaint: async () => ({ success: false, error: 'Complaint provider not ready' }),
   updateComplaintStatus: async () => ({ success: false, error: 'Complaint provider not ready' }),
   trackComplaint: async () => ({ success: false, error: 'Complaint provider not ready' }),
+  deleteComplaint: async () => false,
   getComplaintsByUser: () => [],
   getComplaintsByStatus: () => [],
   getComplaintsByAssignee: () => [],
@@ -292,6 +294,17 @@ export function ComplaintProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const deleteComplaint = async (id: string): Promise<boolean> => {
+    try {
+      await apiClient.delete(`/complaints/${id}`);
+      setComplaints((current) => current.filter((c) => c.id !== id));
+      return true;
+    } catch (error: any) {
+      console.error('Failed to delete complaint', error);
+      return false;
+    }
+  };
+
   const getComplaintsByUser = (userId: string) =>
     complaints.filter((complaint) => complaint.submittedBy.id === userId);
 
@@ -312,6 +325,7 @@ export function ComplaintProvider({ children }: { children: React.ReactNode }) {
         submitAnonymousComplaint,
         updateComplaintStatus,
         trackComplaint,
+        deleteComplaint,
         getComplaintsByUser,
         getComplaintsByStatus,
         getComplaintsByAssignee,

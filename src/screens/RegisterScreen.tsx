@@ -186,12 +186,14 @@ export function RegisterScreen({ navigation, route }: any) {
       <TextInput
         style={styles.input}
         placeholder="Full name"
+        placeholderTextColor="#9CA3AF"
         value={formData.fullName}
         onChangeText={(v) => updateField('fullName', v)}
       />
       <TextInput
         style={styles.input}
         placeholder="Email address"
+        placeholderTextColor="#9CA3AF"
         keyboardType="email-address"
         autoCapitalize="none"
         value={formData.email}
@@ -203,6 +205,7 @@ export function RegisterScreen({ navigation, route }: any) {
         <TextInput
           style={styles.input}
           placeholder="Student ID (7 digits, e.g. 1205001)"
+          placeholderTextColor="#9CA3AF"
           keyboardType="numeric"
           value={formData.studentId}
           onChangeText={(v) => updateField('studentId', v)}
@@ -215,12 +218,14 @@ export function RegisterScreen({ navigation, route }: any) {
           <TextInput
             style={styles.input}
             placeholder="Staff ID"
+            placeholderTextColor="#9CA3AF"
             value={formData.staffId}
             onChangeText={(v) => updateField('staffId', v)}
           />
           <TextInput
             style={styles.input}
             placeholder="Position / job title"
+            placeholderTextColor="#9CA3AF"
             value={formData.position}
             onChangeText={(v) => updateField('position', v)}
           />
@@ -250,12 +255,14 @@ export function RegisterScreen({ navigation, route }: any) {
           <TextInput
             style={styles.input}
             placeholder="Department"
+            placeholderTextColor="#9CA3AF"
             value={formData.department}
             onChangeText={(v) => updateField('department', v)}
           />
           <TextInput
             style={styles.input}
             placeholder="Faculty"
+            placeholderTextColor="#9CA3AF"
             value={formData.faculty}
             onChangeText={(v) => updateField('faculty', v)}
           />
@@ -265,6 +272,7 @@ export function RegisterScreen({ navigation, route }: any) {
       <TextInput
         style={styles.input}
         placeholder="Phone number (optional)"
+        placeholderTextColor="#9CA3AF"
         keyboardType="phone-pad"
         value={formData.phone}
         onChangeText={(v) => updateField('phone', v)}
@@ -272,6 +280,7 @@ export function RegisterScreen({ navigation, route }: any) {
       <TextInput
         style={styles.input}
         placeholder="Password"
+        placeholderTextColor="#9CA3AF"
         secureTextEntry
         value={formData.password}
         onChangeText={(v) => updateField('password', v)}
@@ -279,6 +288,7 @@ export function RegisterScreen({ navigation, route }: any) {
       <TextInput
         style={styles.input}
         placeholder="Confirm password"
+        placeholderTextColor="#9CA3AF"
         secureTextEntry
         value={formData.confirmPassword}
         onChangeText={(v) => updateField('confirmPassword', v)}
@@ -376,6 +386,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     marginBottom: 14,
+    color: '#111827',
   },
   approvalNotice: {
     backgroundColor: '#FFFBEB',

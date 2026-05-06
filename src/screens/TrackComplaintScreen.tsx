@@ -54,6 +54,7 @@ export function TrackComplaintScreen() {
       <TextInput
         style={styles.input}
         placeholder="CMP-12345"
+        placeholderTextColor="#9CA3AF"
         autoCapitalize="characters"
         value={code}
         onChangeText={setCode}
@@ -128,6 +129,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 18,
     letterSpacing: 1,
+    color: '#111827',
   },
   button: {
     backgroundColor: '#2563EB',

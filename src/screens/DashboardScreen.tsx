@@ -25,6 +25,7 @@ export function DashboardScreen({ navigation }: any) {
     getComplaintsByAssignee,
     getComplaintsByUser,
     updateComplaintStatus,
+    deleteComplaint,
   } = useComplaints();
 
   const [activeTab, setActiveTab] = useState<ComplaintStatus>('pending');
@@ -228,6 +229,24 @@ export function DashboardScreen({ navigation }: any) {
     }
   };
 
+  const handleWithdrawComplaint = (complaint: Complaint) => {
+    Alert.alert(
+      'Withdraw Complaint',
+      `Are you sure you want to withdraw "${complaint.title}"? This cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Withdraw',
+          style: 'destructive',
+          onPress: async () => {
+            const ok = await deleteComplaint(complaint.id);
+            if (!ok) Alert.alert('Failed', 'Could not withdraw complaint. Please try again.');
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <ScrollView
       style={styles.container}
@@ -337,6 +356,7 @@ export function DashboardScreen({ navigation }: any) {
                     <TextInput
                       style={styles.inlineInput}
                       placeholder="Rejection reason (required to reject)"
+                      placeholderTextColor="#9CA3AF"
                       value={staffRejectReasons[s.id] || ''}
                       onChangeText={(v) =>
                         setStaffRejectReasons((prev) => ({ ...prev, [s.id]: v }))
@@ -403,7 +423,21 @@ export function DashboardScreen({ navigation }: any) {
       {/* ── COMPLAINT CARDS ────────────────────────────────────────────────── */}
       {filteredComplaints.map((complaint) => (
         <View key={complaint.id} style={styles.complaintCard}>
-          <Text style={styles.complaintTitle}>{complaint.title}</Text>
+          {/* Title + withdraw button row */}
+          <View style={styles.complaintTitleRow}>
+            <Text style={[styles.complaintTitle, { flex: 1 }]}>{complaint.title}</Text>
+            {/* Withdraw — only for student/visitor on pending complaints */}
+            {(user.role === 'student' || user.role === 'visitor') &&
+              complaint.status === 'pending' && (
+                <TouchableOpacity
+                  style={styles.withdrawBtn}
+                  onPress={() => handleWithdrawComplaint(complaint)}
+                >
+                  <Text style={styles.withdrawBtnText}>✕ Withdraw</Text>
+                </TouchableOpacity>
+              )}
+          </View>
+
           <Text style={styles.metaText}>{STATUS_LABELS[complaint.status]}</Text>
           <Text style={styles.metaText}>
             {getLocationLabel(complaint.location)} • {getIssueTypeLabel(complaint.category)}
@@ -413,8 +447,18 @@ export function DashboardScreen({ navigation }: any) {
           {complaint.assignedTo ? (
             <Text style={styles.smallText}>Assigned to: {complaint.assignedTo.name}</Text>
           ) : null}
-          {complaint.rejectionReason ? (
-            <Text style={styles.rejectionText}>Rejection reason: {complaint.rejectionReason}</Text>
+          {complaint.resolvedAt ? (
+            <Text style={[styles.smallText, { color: '#15803D' }]}>
+              ✅ Resolved: {new Date(complaint.resolvedAt).toLocaleDateString()}
+            </Text>
+          ) : null}
+
+          {/* Rejection reason */}
+          {complaint.status === 'rejected' && complaint.rejectionReason ? (
+            <View style={styles.rejectionBanner}>
+              <Text style={styles.rejectionBannerTitle}>Rejection Reason</Text>
+              <Text style={styles.rejectionBannerText}>{complaint.rejectionReason}</Text>
+            </View>
           ) : null}
 
           {isOfficeOrAdmin && complaint.status === 'pending' ? (
@@ -436,6 +480,7 @@ export function DashboardScreen({ navigation }: any) {
               <TextInput
                 style={styles.inlineInput}
                 placeholder="Rejection reason"
+                placeholderTextColor="#9CA3AF"
                 value={rejectionReasonByComplaint[complaint.id] || ''}
                 onChangeText={(value) =>
                   setRejectionReasonByComplaint((current) => ({
@@ -580,6 +625,7 @@ export function DashboardScreen({ navigation }: any) {
             <TextInput
               style={[styles.inlineInput, styles.modalTextArea]}
               placeholder="Describe the resolution..."
+              placeholderTextColor="#9CA3AF"
               multiline
               numberOfLines={5}
               value={resolutionDescription}
@@ -648,6 +694,7 @@ export function DashboardScreen({ navigation }: any) {
             <TextInput
               style={[styles.inlineInput, styles.modalTextArea]}
               placeholder="Explain why you cannot resolve this complaint..."
+              placeholderTextColor="#9CA3AF"
               multiline
               numberOfLines={4}
               value={escalationReason}
@@ -981,6 +1028,49 @@ const styles = StyleSheet.create({
   },
   emptyTitle: { fontSize: 20, fontWeight: '800', color: '#15324B', marginBottom: 8 },
   emptyText: { color: '#486581' },
+
+  // ── Complaint title row ───────────────────────────────────────────────────
+  complaintTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 6,
+    gap: 8,
+  },
+  withdrawBtn: {
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginTop: 2,
+  },
+  withdrawBtnText: {
+    color: '#EF4444',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+
+  // ── Rejection banner ──────────────────────────────────────────────────────
+  rejectionBanner: {
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 10,
+  },
+  rejectionBannerTitle: {
+    color: '#B91C1C',
+    fontWeight: '800',
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  rejectionBannerText: {
+    color: '#DC2626',
+    fontSize: 12,
+    lineHeight: 18,
+  },
 
   // ── Escalation banner ─────────────────────────────────────────────────────
   escalationBanner: {

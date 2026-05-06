@@ -59,6 +59,7 @@ export function LoginScreen({ navigation, route }: any) {
         <TextInput
           style={styles.input}
           placeholder="your.email@campus.edu"
+          placeholderTextColor="#9CA3AF"
           keyboardType="email-address"
           autoCapitalize="none"
           value={email}
@@ -68,6 +69,7 @@ export function LoginScreen({ navigation, route }: any) {
         <TextInput
           style={styles.input}
           placeholder="Enter your password"
+          placeholderTextColor="#9CA3AF"
           secureTextEntry
           value={password}
           onChangeText={setPassword}
@@ -133,6 +135,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     marginBottom: 14,
+    color: '#111827',
   },
   primaryButton: {
     backgroundColor: '#2563EB',
