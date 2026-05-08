@@ -36,8 +36,8 @@ const ROLES = [
   {
     key: 'student',
     icon: '🎓',
-    label: 'Continue as Student',
-    sub: 'Sign in or register with your student account to submit and track complaints.',
+    label: 'Register as Student',
+    sub: 'Create a student account to submit and track complaints.',
     accent: C.student,
     bg: C.studentBg,
     badge: 'Recommended',
@@ -45,8 +45,8 @@ const ROLES = [
   {
     key: 'visitor',
     icon: '🪪',
-    label: 'Continue as Visitor',
-    sub: 'Sign in or create a visitor account before sending the complaint.',
+    label: 'Register as Visitor',
+    sub: 'Create a visitor account before sending the complaint.',
     accent: C.visitor,
     bg: C.visitorBg,
     badge: null,
@@ -59,7 +59,7 @@ export function RoleChoiceScreen({ navigation, route }: any) {
   const insets = useSafeAreaInsets();
 
   const openAuth = (role: 'student' | 'visitor') => {
-    navigation.navigate('Login', { role, redirectLocation: location, source });
+    navigation.navigate('Register', { role, redirectLocation: location, source });
   };
 
   const openAnonymous = () => {
@@ -105,9 +105,9 @@ export function RoleChoiceScreen({ navigation, route }: any) {
         showsVerticalScrollIndicator={false}
       >
         {/* ── HEADING ──────────────────────────────────────────────────────── */}
-        <Text style={styles.heading}>How would you like{'\n'}to continue?</Text>
+        <Text style={styles.heading}>Create your{'\n'}account</Text>
         <Text style={styles.headingSub}>
-          Choose the option that best describes you. Your identity affects how your complaint is tracked.
+          Choose your account type. Already have an account? Use Sign In from the home screen.
         </Text>
 
         {/* ── ROLE CARDS ───────────────────────────────────────────────────── */}
