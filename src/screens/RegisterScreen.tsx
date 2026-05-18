@@ -1,7 +1,10 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -56,6 +59,8 @@ export function RegisterScreen({ navigation, route }: any) {
   const [formData, setFormData] = useState(initialFormState);
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { register } = useAuth();
 
   const updateField = (field: keyof typeof initialFormState, value: string) => {
@@ -155,172 +160,213 @@ export function RegisterScreen({ navigation, route }: any) {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Create Account</Text>
-      <Text style={styles.subtitle}>
-        {redirectLocation && redirectLocation !== 'unknown'
-          ? `Register first, then continue to submit the complaint for ${redirectLocation}.`
-          : 'Create your campus account for complaint submission and tracking.'}
-      </Text>
+    <KeyboardAvoidingView
+      style={styles.keyboardView}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.title}>Create Account</Text>
+        <Text style={styles.subtitle}>
+          {redirectLocation && redirectLocation !== 'unknown'
+            ? `Register first, then continue to submit the complaint for ${redirectLocation}.`
+            : 'Create your campus account for complaint submission and tracking.'}
+        </Text>
 
-      {/* Role selector */}
-      <View style={styles.roleRow}>
-        {(['student', 'visitor', 'staff'] as RegisterRole[]).map((option, index) => (
-          <TouchableOpacity
-            key={option}
-            style={[
-              styles.roleChip,
-              role === option && styles.roleChipActive,
-              index === 2 && styles.lastRoleChip,
-            ]}
-            onPress={() => setRole(option)}
-          >
-            <Text style={[styles.roleChipText, role === option && styles.roleChipTextActive]}>
-              {option}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+        {/* Role selector */}
+        <View style={styles.roleRow}>
+          {(['student', 'visitor', 'staff'] as RegisterRole[]).map((option, index) => (
+            <TouchableOpacity
+              key={option}
+              style={[
+                styles.roleChip,
+                role === option && styles.roleChipActive,
+                index === 2 && styles.lastRoleChip,
+              ]}
+              onPress={() => setRole(option)}
+            >
+              <Text style={[styles.roleChipText, role === option && styles.roleChipTextActive]}>
+                {option}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
-      {/* Common fields */}
-      <TextInput
-        style={styles.input}
-        placeholder="Full name"
-        placeholderTextColor="#9CA3AF"
-        value={formData.fullName}
-        onChangeText={(v) => updateField('fullName', v)}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Email address"
-        placeholderTextColor="#9CA3AF"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        value={formData.email}
-        onChangeText={(v) => updateField('email', v)}
-      />
-
-      {/* Student-specific */}
-      {role === 'student' && (
+        {/* Common fields */}
         <TextInput
           style={styles.input}
-          placeholder="Student ID (7 digits, e.g. 1205001)"
+          placeholder="Full name"
           placeholderTextColor="#9CA3AF"
-          keyboardType="numeric"
-          value={formData.studentId}
-          onChangeText={(v) => updateField('studentId', v)}
+          value={formData.fullName}
+          onChangeText={(v) => updateField('fullName', v)}
         />
-      )}
+        <TextInput
+          style={styles.input}
+          placeholder="Email address"
+          placeholderTextColor="#9CA3AF"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          value={formData.email}
+          onChangeText={(v) => updateField('email', v)}
+        />
 
-      {/* Staff-specific */}
-      {role === 'staff' && (
-        <>
+        {/* Student-specific */}
+        {role === 'student' && (
           <TextInput
             style={styles.input}
-            placeholder="Staff ID"
+            placeholder="Student ID (7 digits, e.g. 1205001)"
             placeholderTextColor="#9CA3AF"
-            value={formData.staffId}
-            onChangeText={(v) => updateField('staffId', v)}
+            keyboardType="numeric"
+            value={formData.studentId}
+            onChangeText={(v) => updateField('studentId', v)}
           />
-          <TextInput
-            style={styles.input}
-            placeholder="Position / job title"
-            placeholderTextColor="#9CA3AF"
-            value={formData.position}
-            onChangeText={(v) => updateField('position', v)}
-          />
-          <Text style={styles.label}>Working Locations (select all that apply)</Text>
-          <View style={styles.locationGrid}>
-            {ALL_LOCATIONS.map((loc) => {
-              const active = selectedLocations.includes(loc.value);
-              return (
-                <TouchableOpacity
-                  key={loc.value}
-                  style={[styles.locationChip, active && styles.locationChipActive]}
-                  onPress={() => toggleLocation(loc.value)}
-                >
-                  <Text style={[styles.locationChipText, active && styles.locationChipTextActive]}>
-                    {loc.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </>
-      )}
-
-      {/* Department / Faculty for student & staff */}
-      {(role === 'student' || role === 'staff') && (
-        <>
-          <TextInput
-            style={styles.input}
-            placeholder="Department"
-            placeholderTextColor="#9CA3AF"
-            value={formData.department}
-            onChangeText={(v) => updateField('department', v)}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Faculty"
-            placeholderTextColor="#9CA3AF"
-            value={formData.faculty}
-            onChangeText={(v) => updateField('faculty', v)}
-          />
-        </>
-      )}
-
-      <TextInput
-        style={styles.input}
-        placeholder="Phone number (optional)"
-        placeholderTextColor="#9CA3AF"
-        keyboardType="phone-pad"
-        value={formData.phone}
-        onChangeText={(v) => updateField('phone', v)}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        placeholderTextColor="#9CA3AF"
-        secureTextEntry
-        value={formData.password}
-        onChangeText={(v) => updateField('password', v)}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Confirm password"
-        placeholderTextColor="#9CA3AF"
-        secureTextEntry
-        value={formData.confirmPassword}
-        onChangeText={(v) => updateField('confirmPassword', v)}
-      />
-
-      {role === 'staff' && (
-        <View style={styles.approvalNotice}>
-          <Text style={styles.approvalNoticeText}>
-            ⏳ Staff accounts require office approval before you can sign in.
-          </Text>
-        </View>
-      )}
-
-      <TouchableOpacity style={styles.primaryButton} onPress={submit} disabled={loading}>
-        {loading ? (
-          <ActivityIndicator color="#FFFFFF" />
-        ) : (
-          <Text style={styles.primaryButtonText}>Register</Text>
         )}
-      </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.secondaryButton}
-        onPress={() => navigation.navigate('Login', { role, redirectLocation, source })}
-      >
-        <Text style={styles.secondaryButtonText}>Already have an account? Sign in</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        {/* Staff-specific */}
+        {role === 'staff' && (
+          <>
+            <TextInput
+              style={styles.input}
+              placeholder="Staff ID"
+              placeholderTextColor="#9CA3AF"
+              value={formData.staffId}
+              onChangeText={(v) => updateField('staffId', v)}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Position / job title"
+              placeholderTextColor="#9CA3AF"
+              value={formData.position}
+              onChangeText={(v) => updateField('position', v)}
+            />
+            <Text style={styles.label}>Working Locations (select all that apply)</Text>
+            <View style={styles.locationGrid}>
+              {ALL_LOCATIONS.map((loc) => {
+                const active = selectedLocations.includes(loc.value);
+                return (
+                  <TouchableOpacity
+                    key={loc.value}
+                    style={[styles.locationChip, active && styles.locationChipActive]}
+                    onPress={() => toggleLocation(loc.value)}
+                  >
+                    <Text style={[styles.locationChipText, active && styles.locationChipTextActive]}>
+                      {loc.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </>
+        )}
+
+        {/* Department / Faculty for student & staff */}
+        {(role === 'student' || role === 'staff') && (
+          <>
+            <TextInput
+              style={styles.input}
+              placeholder="Department"
+              placeholderTextColor="#9CA3AF"
+              value={formData.department}
+              onChangeText={(v) => updateField('department', v)}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Faculty"
+              placeholderTextColor="#9CA3AF"
+              value={formData.faculty}
+              onChangeText={(v) => updateField('faculty', v)}
+            />
+          </>
+        )}
+
+        <TextInput
+          style={styles.input}
+          placeholder="Phone number (optional)"
+          placeholderTextColor="#9CA3AF"
+          keyboardType="phone-pad"
+          value={formData.phone}
+          onChangeText={(v) => updateField('phone', v)}
+        />
+
+        {/* Password with show/hide */}
+        <View style={styles.passwordWrapper}>
+          <TextInput
+            style={styles.passwordInput}
+            placeholder="Password"
+            placeholderTextColor="#9CA3AF"
+            secureTextEntry={!showPassword}
+            value={formData.password}
+            onChangeText={(v) => updateField('password', v)}
+          />
+          <TouchableOpacity
+            style={styles.eyeButton}
+            onPress={() => setShowPassword((prev) => !prev)}
+          >
+            <Ionicons
+              name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+              size={22}
+              color="#6B7280"
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* Confirm password with show/hide */}
+        <View style={styles.passwordWrapper}>
+          <TextInput
+            style={styles.passwordInput}
+            placeholder="Confirm password"
+            placeholderTextColor="#9CA3AF"
+            secureTextEntry={!showConfirmPassword}
+            value={formData.confirmPassword}
+            onChangeText={(v) => updateField('confirmPassword', v)}
+          />
+          <TouchableOpacity
+            style={styles.eyeButton}
+            onPress={() => setShowConfirmPassword((prev) => !prev)}
+          >
+            <Ionicons
+              name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
+              size={22}
+              color="#6B7280"
+            />
+          </TouchableOpacity>
+        </View>
+
+        {role === 'staff' && (
+          <View style={styles.approvalNotice}>
+            <Text style={styles.approvalNoticeText}>
+              ⏳ Staff accounts require office approval before you can sign in.
+            </Text>
+          </View>
+        )}
+
+        <TouchableOpacity style={styles.primaryButton} onPress={submit} disabled={loading}>
+          {loading ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.primaryButtonText}>Register</Text>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.secondaryButton}
+          onPress={() => navigation.navigate('Login', { role, redirectLocation, source })}
+        >
+          <Text style={styles.secondaryButtonText}>Already have an account? Sign in</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  keyboardView: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
   container: {
     flexGrow: 1,
     padding: 24,
@@ -387,6 +433,25 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     marginBottom: 14,
     color: '#111827',
+  },
+  passwordWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 18,
+    marginBottom: 14,
+  },
+  passwordInput: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    color: '#111827',
+  },
+  eyeButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 16,
   },
   approvalNotice: {
     backgroundColor: '#FFFBEB',

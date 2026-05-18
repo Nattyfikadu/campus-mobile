@@ -5,6 +5,8 @@ import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -32,6 +34,11 @@ export function ComplaintFormScreen({ navigation, route }: any) {
   const [category, setCategory] = useState<IssueType>('other');
   const [submitting, setSubmitting] = useState(false);
   const [attachments, setAttachments] = useState<LocalAttachment[]>([]);
+
+  // Track whether the user has interacted with the pickers so we can show
+  // a gray placeholder style before a real selection is made.
+  const [locationTouched, setLocationTouched] = useState(scannedLocation !== 'unknown');
+  const [categoryTouched, setCategoryTouched] = useState(false);
 
   const appendAttachments = (nextFiles: LocalAttachment[]) => {
     setAttachments((current) => {
@@ -168,103 +175,156 @@ export function ComplaintFormScreen({ navigation, route }: any) {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.headerCard}>
-        <Text style={styles.title}>
-          {mode === 'anonymous' ? 'Anonymous Complaint' : 'Complaint Form'}
-        </Text>
-        <Text style={styles.subtitle}>
-          {mode === 'anonymous'
-            ? 'Your identity will not be saved. You will receive a tracking code after submission.'
-            : `Submitting as ${user?.role || 'user'} for ${getLocationLabel(location)}.`}
-        </Text>
-      </View>
+    <KeyboardAvoidingView
+      style={styles.keyboardView}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.headerCard}>
+          <Text style={styles.title}>
+            {mode === 'anonymous' ? 'Anonymous Complaint' : 'Complaint Form'}
+          </Text>
+          <Text style={styles.subtitle}>
+            {mode === 'anonymous'
+              ? 'Your identity will not be saved. You will receive a tracking code after submission.'
+              : `Submitting as ${user?.role || 'user'} for ${getLocationLabel(location)}.`}
+          </Text>
+        </View>
 
-      <Text style={styles.label}>Complaint title</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Short summary of the issue"
-        placeholderTextColor="#9CA3AF"
-        value={title}
-        onChangeText={setTitle}
-      />
+        <Text style={styles.label}>Complaint title</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Short summary of the issue"
+          placeholderTextColor="#9CA3AF"
+          value={title}
+          onChangeText={setTitle}
+        />
 
-      <Text style={styles.label}>Description</Text>
-      <TextInput
-        style={[styles.input, styles.textArea]}
-        placeholder="Explain what happened and what the campus should fix"
-        placeholderTextColor="#9CA3AF"
-        multiline
-        numberOfLines={6}
-        value={description}
-        onChangeText={setDescription}
-      />
+        <Text style={styles.label}>Description</Text>
+        <TextInput
+          style={[styles.input, styles.textArea]}
+          placeholder="Explain what happened and what the campus should fix"
+          placeholderTextColor="#9CA3AF"
+          multiline
+          numberOfLines={6}
+          value={description}
+          onChangeText={setDescription}
+        />
 
-      <Text style={styles.label}>Location</Text>
-      <View style={styles.pickerCard}>
-        <Picker selectedValue={location} onValueChange={(value) => setLocation(value as ComplaintLocation)}>
-          {LOCATIONS.map((item) => (
-            <Picker.Item key={item.value} label={item.label} value={item.value} />
-          ))}
-        </Picker>
-      </View>
+        <Text style={styles.label}>Location</Text>
+        <View style={styles.pickerCard}>
+          <Picker
+            selectedValue={location}
+            onValueChange={(value) => {
+              setLocation(value as ComplaintLocation);
+              setLocationTouched(true);
+            }}
+            style={locationTouched ? styles.pickerSelected : styles.pickerPlaceholder}
+          >
+            {!locationTouched && (
+              <Picker.Item
+                label="Select a location…"
+                value="unknown"
+                color="#9CA3AF"
+                enabled={false}
+              />
+            )}
+            {LOCATIONS.map((item) => (
+              <Picker.Item
+                key={item.value}
+                label={item.label}
+                value={item.value}
+                color="#111827"
+              />
+            ))}
+          </Picker>
+        </View>
 
-      <Text style={styles.label}>Category</Text>
-      <View style={styles.pickerCard}>
-        <Picker selectedValue={category} onValueChange={(value) => setCategory(value as IssueType)}>
-          {ISSUE_TYPES.map((item) => (
-            <Picker.Item key={item.value} label={item.label} value={item.value} />
-          ))}
-        </Picker>
-      </View>
+        <Text style={styles.label}>Category</Text>
+        <View style={styles.pickerCard}>
+          <Picker
+            selectedValue={category}
+            onValueChange={(value) => {
+              setCategory(value as IssueType);
+              setCategoryTouched(true);
+            }}
+            style={categoryTouched ? styles.pickerSelected : styles.pickerPlaceholder}
+          >
+            {!categoryTouched && (
+              <Picker.Item
+                label="Select a category…"
+                value="other"
+                color="#9CA3AF"
+                enabled={false}
+              />
+            )}
+            {ISSUE_TYPES.map((item) => (
+              <Picker.Item
+                key={item.value}
+                label={item.label}
+                value={item.value}
+                color="#111827"
+              />
+            ))}
+          </Picker>
+        </View>
 
-      <Text style={styles.label}>Attachments</Text>
-      <View style={styles.attachmentsCard}>
-        <Text style={styles.attachmentHint}>
-          Add up to 5 files. Photos, videos, and voice/audio files are supported on mobile.
-        </Text>
+        <Text style={styles.label}>Attachments</Text>
+        <View style={styles.attachmentsCard}>
+          <Text style={styles.attachmentHint}>
+            Add up to 5 files. Photos, videos, and voice/audio files are supported on mobile.
+          </Text>
 
-        <TouchableOpacity style={styles.secondaryButton} onPress={pickPhotoOrVideo} disabled={submitting}>
-          <Text style={styles.secondaryButtonText}>Add Photo or Video</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.secondaryButton} onPress={pickPhotoOrVideo} disabled={submitting}>
+            <Text style={styles.secondaryButtonText}>Add Photo or Video</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.secondaryButton} onPress={pickAudioOrFile} disabled={submitting}>
-          <Text style={styles.secondaryButtonText}>Add Voice or File</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.secondaryButton} onPress={pickAudioOrFile} disabled={submitting}>
+            <Text style={styles.secondaryButtonText}>Add Voice or File</Text>
+          </TouchableOpacity>
 
-        {attachments.map((attachment) => (
-          <View key={attachment.uri} style={styles.attachmentItem}>
-            <View style={styles.attachmentMeta}>
-              <Text style={styles.attachmentName} numberOfLines={1}>
-                {attachment.name}
-              </Text>
-              <Text style={styles.attachmentType}>{attachment.kind.toUpperCase()}</Text>
+          {attachments.map((attachment) => (
+            <View key={attachment.uri} style={styles.attachmentItem}>
+              <View style={styles.attachmentMeta}>
+                <Text style={styles.attachmentName} numberOfLines={1}>
+                  {attachment.name}
+                </Text>
+                <Text style={styles.attachmentType}>{attachment.kind.toUpperCase()}</Text>
+              </View>
+              <TouchableOpacity onPress={() => removeAttachment(attachment.uri)}>
+                <Text style={styles.removeText}>Remove</Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity onPress={() => removeAttachment(attachment.uri)}>
-              <Text style={styles.removeText}>Remove</Text>
-            </TouchableOpacity>
-          </View>
-        ))}
-      </View>
+          ))}
+        </View>
 
-      <TouchableOpacity style={styles.primaryButton} onPress={submitComplaint} disabled={submitting}>
-        {submitting ? (
-          <ActivityIndicator color="#FFFFFF" />
-        ) : (
-          <Text style={styles.primaryButtonText}>Submit Complaint</Text>
-        )}
-      </TouchableOpacity>
-
-      {mode !== 'anonymous' ? (
-        <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate('Dashboard')}>
-          <Text style={styles.secondaryButtonText}>Back to Dashboard</Text>
+        <TouchableOpacity style={styles.primaryButton} onPress={submitComplaint} disabled={submitting}>
+          {submitting ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.primaryButtonText}>Submit Complaint</Text>
+          )}
         </TouchableOpacity>
-      ) : null}
-    </ScrollView>
+
+        {mode !== 'anonymous' ? (
+          <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate('Dashboard')}>
+            <Text style={styles.secondaryButtonText}>Back to Dashboard</Text>
+          </TouchableOpacity>
+        ) : null}
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  keyboardView: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
   container: {
     flexGrow: 1,
     paddingHorizontal: 24,
@@ -304,6 +364,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     marginBottom: 14,
+    color: '#111827',
     textAlignVertical: 'top',
   },
   textArea: {
@@ -316,6 +377,12 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     marginBottom: 14,
     overflow: 'hidden',
+  },
+  pickerPlaceholder: {
+    color: '#9CA3AF',
+  },
+  pickerSelected: {
+    color: '#111827',
   },
   attachmentsCard: {
     backgroundColor: '#FFFFFF',

@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getIssueTypeLabel, getLocationLabel, ROLE_LABELS, STATUS_LABELS } from '../constants/complaints';
 import { useAuth, User } from '../context/AuthContext';
 import { Complaint, ComplaintStatus, useComplaints } from '../context/ComplaintContext';
@@ -19,6 +20,7 @@ const dashboardTabs: ComplaintStatus[] = ['pending', 'approved', 'in-progress', 
 
 export function DashboardScreen({ navigation }: any) {
   const { user, logout, getAllStaff, getPendingStaff, approveStaff, rejectStaff } = useAuth();
+  const insets = useSafeAreaInsets();
   const {
     complaints,
     isLoading,
@@ -99,7 +101,6 @@ export function DashboardScreen({ navigation }: any) {
       </View>
     );
   }
-
   const filteredComplaints = visibleComplaints.filter((complaint) =>
     user.role === 'staff'
       ? complaint.status === activeTab && (activeTab === 'in-progress' || activeTab === 'resolved')
@@ -279,18 +280,20 @@ export function DashboardScreen({ navigation }: any) {
   };
 
   return (
-    <ScrollView
-      style={styles.container}
-      refreshControl={
-        <RefreshControl
-          refreshing={isLoading || pendingStaffLoading}
-          onRefresh={async () => {
-            await reloadComplaints();
-            await loadPendingStaff();
-          }}
-        />
-      }
-    >
+    <View style={styles.screenWrapper}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={{ paddingBottom: 16 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoading || pendingStaffLoading}
+            onRefresh={async () => {
+              await reloadComplaints();
+              await loadPendingStaff();
+            }}
+          />
+        }
+      >
       {/* ── HEADER ─────────────────────────────────────────────────────────── */}
       <View style={styles.headerCard}>
         <Text style={styles.headerEyebrow}>{ROLE_LABELS[user.role]} dashboard</Text>
@@ -708,18 +711,26 @@ export function DashboardScreen({ navigation }: any) {
         </View>
       ))}
 
-      <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate('Home')}>
-        <Text style={styles.secondaryButtonText}>← Back Home</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.logoutButton}
-        onPress={async () => {
-          await logout();
-          navigation.replace('Home');
-        }}
-      >
-        <Text style={styles.logoutButtonText}>Sign Out</Text>
-      </TouchableOpacity>
+      </ScrollView>
+
+      {/* ── FIXED FOOTER ───────────────────────────────────────────────────── */}
+      <View style={[styles.footer, { paddingBottom: insets.bottom || 16 }]}>
+        <TouchableOpacity
+          style={styles.footerBackButton}
+          onPress={() => navigation.navigate('Home')}
+        >
+          <Text style={styles.footerBackText}>← Back Home</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.footerSignOutButton}
+          onPress={async () => {
+            await logout();
+            navigation.replace('Home');
+          }}
+        >
+          <Text style={styles.footerSignOutText}>Sign Out</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* ── RESOLVE MODAL ──────────────────────────────────────────────────── */}
       <Modal
@@ -827,14 +838,17 @@ export function DashboardScreen({ navigation }: any) {
           </View>
         </View>
       </Modal>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screenWrapper: {
     flex: 1,
     backgroundColor: '#F4F7FB',
+  },
+  container: {
+    flex: 1,
     padding: 18,
   },
   headerCard: {
@@ -1115,14 +1129,46 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   secondaryButtonText: { color: '#15324B', fontWeight: '700' },
-  logoutButton: {
-    borderRadius: 16,
-    paddingVertical: 12,
+
+  // ── Fixed footer ──────────────────────────────────────────────────────────
+  footer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 30,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+    paddingHorizontal: 18,
+    paddingTop: 12,
+    gap: 10,
   },
-  logoutButtonText: { color: '#94A3B8', fontWeight: '600', fontSize: 13 },
+  footerBackButton: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#D7E1ED',
+    borderRadius: 16,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  footerBackText: {
+    color: '#15324B',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  footerSignOutButton: {
+    flex: 1,
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    borderRadius: 16,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  footerSignOutText: {
+    color: '#DC2626',
+    fontWeight: '700',
+    fontSize: 14,
+  },
 
   // ── Empty states ──────────────────────────────────────────────────────────
   emptyStateCard: {

@@ -1,7 +1,11 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -13,6 +17,7 @@ import { useAuth } from '../context/AuthContext';
 export function LoginScreen({ navigation, route }: any) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
 
@@ -44,63 +49,93 @@ export function LoginScreen({ navigation, route }: any) {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.headingBlock}>
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>
-            {redirectLocation
-              ? `Sign in as ${selectedRole} to continue your complaint for ${redirectLocation}.`
-              : 'Sign in to continue to your dashboard.'}
-          </Text>
+    <KeyboardAvoidingView
+      style={styles.keyboardView}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.content}>
+          <View style={styles.headingBlock}>
+            <Text style={styles.title}>Welcome Back</Text>
+            <Text style={styles.subtitle}>
+              {redirectLocation
+                ? `Sign in as ${selectedRole} to continue your complaint for ${redirectLocation}.`
+                : 'Sign in to continue to your dashboard.'}
+            </Text>
+          </View>
+
+          <Text style={styles.fieldLabel}>Email Address</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="your.email@campus.edu"
+            placeholderTextColor="#9CA3AF"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={email}
+            onChangeText={setEmail}
+          />
+
+          <Text style={styles.fieldLabel}>Password</Text>
+          <View style={styles.passwordWrapper}>
+            <TextInput
+              style={styles.passwordInput}
+              placeholder="Enter your password"
+              placeholderTextColor="#9CA3AF"
+              secureTextEntry={!showPassword}
+              value={password}
+              onChangeText={setPassword}
+            />
+            <TouchableOpacity
+              style={styles.eyeButton}
+              onPress={() => setShowPassword((prev) => !prev)}
+            >
+              <Ionicons
+                name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                size={22}
+                color="#6B7280"
+              />
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity style={styles.primaryButton} onPress={handleLogin} disabled={loading}>
+            {loading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.primaryButtonText}>Sign In</Text>
+            )}
+          </TouchableOpacity>
         </View>
 
-        <Text style={styles.fieldLabel}>Email Address</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="your.email@campus.edu"
-          placeholderTextColor="#9CA3AF"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          value={email}
-          onChangeText={setEmail}
-        />
-        <Text style={styles.fieldLabel}>Password</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter your password"
-          placeholderTextColor="#9CA3AF"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-
-        <TouchableOpacity style={styles.primaryButton} onPress={handleLogin} disabled={loading}>
-          {loading ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.primaryButtonText}>Sign In</Text>}
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={styles.footerLink}
-          onPress={() => navigation.navigate('RoleChoice', { redirectLocation, source })}
-        >
-          <Text style={styles.secondaryButtonText}>Don&apos;t have an account? Sign Up</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={styles.footerLink}
+            onPress={() => navigation.navigate('RoleChoice', { redirectLocation, source })}
+          >
+            <Text style={styles.secondaryButtonText}>Don&apos;t have an account? Sign Up</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  keyboardView: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   content: {
     flex: 1,
     padding: 24,
     justifyContent: 'center',
+    paddingTop: 60,
   },
   headingBlock: {
     marginBottom: 26,
@@ -131,6 +166,25 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     color: '#111827',
   },
+  passwordWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 18,
+    marginBottom: 14,
+  },
+  passwordInput: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    color: '#111827',
+  },
+  eyeButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 16,
+  },
   primaryButton: {
     backgroundColor: '#2563EB',
     borderRadius: 18,
@@ -150,11 +204,6 @@ const styles = StyleSheet.create({
     borderTopColor: '#E5E7EB',
   },
   footerLink: {
-    alignItems: 'center',
-  },
-  secondaryButton: {
-    marginTop: 14,
-    paddingVertical: 14,
     alignItems: 'center',
   },
   secondaryButtonText: {
